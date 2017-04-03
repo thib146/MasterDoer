@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">MasterDoer</string>
+    <string name="tasks_name">Tasks</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="add_project_description">Add a new project to your list</string>
+    <string name="no_project_message">Looks like you don\'t have a project yet. Add one right now by clicking on the + sign!</string>
+
+    <string name="project_dialog_hint">New project\'s name</string>
+    <string name="project_dialog_title">Add a new project</string>
+    <string name="project_dialog_add">Add</string>
+    <string name="project_dialog_cancel">Cancel</string>
+    <string name="project_date_text">Created on:</string>
+
+    <string name="add_task_description">Add a new task to your project</string>
+    <string name="no_task_message">A ToDo is\'t a ToDo without a task. Add one right now by clicking on the + sign!</string>
+
+    <string name="task_dialog_hint">New task\'s name</string>
+    <string name="task_dialog_title">Add a new task</string>
+    <string name="task_dialog_add">Add</string>
+    <string name="task_dialog_cancel">Cancel</string>
+</resources>
