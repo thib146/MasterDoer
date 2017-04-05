@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -28,6 +29,9 @@ import android.widget.TextView;
 
 import com.thibautmassard.android.masterdoer.data.Contract;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import timber.log.Timber;
@@ -46,8 +50,12 @@ public class ProjectListFragment extends Fragment implements
     @BindView(R.id.recycler_view) RecyclerView projectRecyclerView;
     @BindView(R.id.swipe_refresh) SwipeRefreshLayout swipeRefreshLayout;
     @BindView(R.id.error_message) TextView errorMessage;
+    @BindView(R.id.fab_add_project) FloatingActionButton fabAddProject;
+
     private ProjectAdapter projectAdapter;
     private int mPosition = RecyclerView.NO_POSITION;
+
+    private ArrayList<String> projectList = new ArrayList<String>();
 
     private Activity mActivity;
 
@@ -97,6 +105,8 @@ public class ProjectListFragment extends Fragment implements
             Bundle arguments = new Bundle();
             arguments.putString(TaskListFragment.ARG_ITEM_ID, projectId);
             arguments.putString(TaskListFragment.ARG_ITEM_NAME, mProjectName);
+            arguments.putInt(TaskListFragment.ARG_ITEM_POSITION, position);
+            arguments.putStringArrayList(TaskListFragment.ARG_PROJECT_LIST, projectList);
             TaskListFragment fragment = new TaskListFragment();
             fragment.setArguments(arguments);
             getActivity().getSupportFragmentManager().beginTransaction()
@@ -105,8 +115,18 @@ public class ProjectListFragment extends Fragment implements
             Intent detailIntent = new Intent(getActivity(), TaskActivity.class);
             detailIntent.putExtra(TaskListFragment.ARG_ITEM_ID, projectId);
             detailIntent.putExtra(TaskListFragment.ARG_ITEM_NAME, mProjectName);
+            String positionStr = String.valueOf(position);
+            detailIntent.putExtra(TaskListFragment.ARG_ITEM_POSITION, positionStr);
+            detailIntent.putStringArrayListExtra(TaskListFragment.ARG_PROJECT_LIST, projectList);
             startActivity(detailIntent);
         }
+
+        fabAddProject.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AddProjectDialog().show(getActivity().getFragmentManager(), "ProjectDialogFragment");
+            }
+        });
     }
 
     @Override
@@ -183,13 +203,6 @@ public class ProjectListFragment extends Fragment implements
                         null,
                         sortOrder);
 
-//                return new CursorLoader(getActivity(),
-//                        Contract.TaskEntry.CONTENT_URI,
-//                        MAIN_TASKS_PROJECTION,
-//                        Contract.TaskEntry.COLUMN_TASK_ID,
-//                        null,
-//                        null);
-
             default:
                 throw new RuntimeException("Loader Not Implemented: " + id);
         }
@@ -203,6 +216,11 @@ public class ProjectListFragment extends Fragment implements
             projectAdapter.setCursor(data);
         }
         mCursor = data;
+
+        for (int pos = 0; pos < mCursor.getCount(); pos++) {
+            mCursor.moveToPosition(pos);
+            projectList.add(mCursor.getString(Contract.ProjectEntry.POSITION_PROJECT_NAME));
+        }
 
         if (mPosition == RecyclerView.NO_POSITION) mPosition = 0;
 
@@ -278,6 +296,12 @@ public class ProjectListFragment extends Fragment implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        getActivity().getSupportLoaderManager().restartLoader(ID_PROJECTS_LOADER, null, ProjectListFragment.this);
     }
 
     @Override

@@ -11,6 +11,8 @@ import android.widget.TextView;
 
 import com.thibautmassard.android.masterdoer.data.Contract;
 
+import java.util.ArrayList;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
@@ -21,8 +23,22 @@ import butterknife.ButterKnife;
 public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectViewHolder> {
 
     private final Context context;
-    private Cursor mCursor;
+    private Cursor mProjectCursor;
     private final ProjectAdapter.ProjectAdapterOnClickHandler clickHandler;
+
+    private int mTaskNumber;
+    private int mTaskNumberDone;
+
+    public static final String[] MAIN_TASKS_PROJECTION = {
+            Contract.TaskEntry._ID,
+            Contract.TaskEntry.COLUMN_TASK_ID,
+            Contract.TaskEntry.COLUMN_TASK_PROJECT_ID,
+            Contract.TaskEntry.COLUMN_TASK_NAME,
+            Contract.TaskEntry.COLUMN_TASK_DATE,
+            Contract.TaskEntry.COLUMN_TASK_STATUS,
+            Contract.TaskEntry.COLUMN_TASK_PRIORITY,
+            Contract.TaskEntry.COLUMN_TASK_REMINDER_DATE
+    };
 
     public int projectAdapterPosition;
 
@@ -32,22 +48,22 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
     }
 
     void setCursor(Cursor cursor) {
-        mCursor = cursor;
+        mProjectCursor = cursor;
         notifyDataSetChanged();
     }
 
     String getIdAtPosition(int position) {
-        mCursor.moveToPosition(position);
-        String id = mCursor.getString(Contract.ProjectEntry.POSITION_ID);
-        //return mCursor.getString(Contract.ProjectEntry.POSITION_PROJECT_ID);
-        return mCursor.getString(Contract.ProjectEntry.POSITION_ID);
+        mProjectCursor.moveToPosition(position);
+        String id = mProjectCursor.getString(Contract.ProjectEntry.POSITION_ID);
+        //return mProjectCursor.getString(Contract.ProjectEntry.POSITION_PROJECT_ID);
+        return mProjectCursor.getString(Contract.ProjectEntry.POSITION_ID);
     }
 
     @Override
     public int getItemCount() {
         int count = 0;
-        if (mCursor != null) {
-            count = mCursor.getCount();
+        if (mProjectCursor != null) {
+            count = mProjectCursor.getCount();
         }
         return count;
     }
@@ -63,19 +79,49 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
     @Override
     public void onBindViewHolder(ProjectAdapter.ProjectViewHolder holder, int position) {
 
-        mCursor.moveToPosition(position);
+        mProjectCursor.moveToPosition(position);
 
-        //holder.projectBulletPoint.setColorFilter(mCursor.getInt(Contract.ProjectEntry.POSITION_PROJECT_COLOR));
+        String[] mSelectionArgs = {""};
+        String projectId = mProjectCursor.getString(Contract.ProjectEntry.POSITION_ID);
+        mSelectionArgs[0] = mProjectCursor.getString(Contract.ProjectEntry.POSITION_ID);
 
-        holder.projectName.setText(mCursor.getString(Contract.ProjectEntry.POSITION_PROJECT_NAME));
+        Cursor mTaskCursor = context.getContentResolver().query(
+                Contract.TaskEntry.CONTENT_URI,
+                MAIN_TASKS_PROJECTION,
+                Contract.TaskEntry.COLUMN_TASK_PROJECT_ID + "=?",
+                mSelectionArgs,
+                null);
 
-        holder.projectCreationDate.setText(mCursor.getString(Contract.ProjectEntry.POSITION_PROJECT_DATE));
+        ArrayList<String> taskStatusList = new ArrayList<String>();
 
-        // TODO: add tasks remaining numbers
-        //holder.projectTasksRemaining.setText();
+        for (int pos = 0; pos < mTaskCursor.getCount(); pos++) {
+            mTaskCursor.moveToPosition(pos);
+            String taskStatus = mTaskCursor.getString(Contract.TaskEntry.POSITION_TASK_STATUS);
+            taskStatusList.add(taskStatus);
+            if (taskStatus.equals("1")) {
+                mTaskNumberDone++;
+            }
+        }
 
-        // TODO: add percentage completed
-        //holder.projectPercentageCompleted.setText();
+        mTaskNumber = taskStatusList.size();
+
+        float percentage = mTaskNumberDone*100/mTaskNumber;
+        String percentageStr = String.format("%d", (long) percentage) + "%";
+
+        //holder.projectBulletPoint.setColorFilter(mProjectCursor.getInt(Contract.ProjectEntry.POSITION_PROJECT_COLOR));
+
+        holder.projectName.setText(mProjectCursor.getString(Contract.ProjectEntry.POSITION_PROJECT_NAME));
+
+        holder.projectCreationDate.setText(mProjectCursor.getString(Contract.ProjectEntry.POSITION_PROJECT_DATE));
+
+        String tasksCount = mTaskNumberDone + "/" + mTaskNumber;
+
+        holder.projectTasksRemaining.setText(tasksCount);
+
+        holder.projectPercentageCompleted.setText(percentageStr);
+
+        mTaskNumber = 0;
+        mTaskNumberDone = 0;
 
     }
 
@@ -100,9 +146,9 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
         @Override
         public void onClick(View v) {
             projectAdapterPosition = getAdapterPosition();
-            mCursor.moveToPosition(projectAdapterPosition);
-            int projectIdColumn = mCursor.getColumnIndex(Contract.ProjectEntry.COLUMN_PROJECT_ID);
-            clickHandler.onClick(mCursor.getString(projectIdColumn));
+            mProjectCursor.moveToPosition(projectAdapterPosition);
+            int projectIdColumn = mProjectCursor.getColumnIndex(Contract.ProjectEntry.COLUMN_PROJECT_ID);
+            clickHandler.onClick(mProjectCursor.getString(projectIdColumn));
         }
     }
 }

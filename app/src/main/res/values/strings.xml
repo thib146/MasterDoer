@@ -1,7 +1,11 @@
 <resources>
     <string name="app_name">MasterDoer</string>
     <string name="tasks_name">Tasks</string>
+    <string name="add_task_name">Add a new task</string>
     <string name="action_settings">Settings</string>
+
+    <string name="today_text">Today</string>
+    <string name="week_text">Next 7 days</string>
 
     <string name="add_project_description">Add a new project to your list</string>
     <string name="no_project_message">Looks like you don\'t have a project yet. Add one right now by clicking on the + sign!</string>
@@ -13,10 +17,24 @@
     <string name="project_date_text">Created on:</string>
 
     <string name="add_task_description">Add a new task to your project</string>
-    <string name="no_task_message">A ToDo is\'t a ToDo without a task. Add one right now by clicking on the + sign!</string>
+    <string name="no_task_message">A TODO isn\'t a TODO without a task. Add one right now by clicking on the + sign!</string>
 
     <string name="task_dialog_hint">New task\'s name</string>
     <string name="task_dialog_title">Add a new task</string>
     <string name="task_dialog_add">Add</string>
     <string name="task_dialog_cancel">Cancel</string>
+
+    <string name="add_task_dialog_datepicker_title">Set a due date:</string>
+    <string name="add_task_priority_title">Priority:</string>
+    <string name="add_task_project_title">Project:</string>
+    <string name="add_task_reminder_title">Reminder:</string>
+    <string name="add_task_date_picker_hint">No date</string>
+    <string name="add_task_reminder_hint">No reminder</string>
+    <string name="add_task_button_cancel">Cancel</string>
+    <string name="add_task_button_add">Add</string>
+    <string name="add_task_empty_name">The task\'s name is empty</string>
+
+    <string name="edit_date_dialog_datepicker_title">Set a due date:</string>
+    <string name="edit_date_dialog_cancel">Cancel</string>
+    <string name="edit_date_dialog_set">Set</string>
 </resources>

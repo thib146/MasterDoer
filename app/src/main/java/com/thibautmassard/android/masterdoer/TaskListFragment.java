@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -28,10 +29,13 @@ import com.thibautmassard.android.masterdoer.data.Contract;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import timber.log.Timber;
+
+import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 
 /**
  * Created by thib146 on 31/03/2017.
@@ -45,14 +49,28 @@ public class TaskListFragment extends Fragment implements
     @BindView(R.id.task_recycler_view) RecyclerView taskRecyclerView;
     @BindView(R.id.task_swipe_refresh) SwipeRefreshLayout swipeRefreshLayout;
     @BindView(R.id.task_error_message) TextView errorMessage;
+    @BindView(R.id.fab_add_task) FloatingActionButton fabAddTask;
 
     // Key used to get the movie ID through the fragment creation
     public static final String ARG_ITEM_ID = "item_id";
     public static final String ARG_ITEM_NAME = "item_name";
+    public static final String ARG_ITEM_POSITION = "item_position";
+    public static final String ARG_ITEM_TODAY = "today";
+    public static final String ARG_ITEM_WEEK = "week";
+    public static final String ARG_PROJECT_LIST= "project_list";
 
     private String mProjectId;
     private String mProjectName;
+    private int mProjectPosition;
+    private String mProjectPositionStr;
     private int mTaskStatus;
+    private ArrayList<String> projectList = new ArrayList<String>();
+
+    private String mToday;
+    private String mWeek;
+
+    public static boolean mTodayView;
+    public static boolean mWeekView;
 
     private TaskAdapter taskAdapter;
     private int mPosition = RecyclerView.NO_POSITION;
@@ -122,14 +140,36 @@ public class TaskListFragment extends Fragment implements
         Intent intentThatStartedThatActivity = getActivity().getIntent();
         Bundle bundle = getArguments();
 
-        if (bundle != null) { // If the fragment was created in Landscape Mode, get the movie id with the Fragment's arguments
-            mProjectId = bundle.getString(TaskListFragment.ARG_ITEM_ID);
-            TaskActivity.mProjectId = mProjectId;
-            mProjectName = bundle.getString(TaskListFragment.ARG_ITEM_NAME);
-        } else { // If the fragment was created in Portrait mode (intent), get the movie id with the Intent's extra
-            mProjectId = intentThatStartedThatActivity.getStringExtra(TaskListFragment.ARG_ITEM_ID);
-            TaskActivity.mProjectId = mProjectId;
-            mProjectName = intentThatStartedThatActivity.getStringExtra(TaskListFragment.ARG_ITEM_NAME);
+        if (bundle != null) { // If the fragment was created in Landscape Mode, get the project id with the Fragment's arguments
+
+            mToday = bundle.getString(TaskListFragment.ARG_ITEM_TODAY);
+            mWeek = bundle.getString(TaskListFragment.ARG_ITEM_WEEK);
+
+            if (!mToday.equals("") && !mToday.isEmpty()) {
+                mProjectName = "Today";
+            } else if (!mWeek.equals("") && !mWeek.isEmpty()) {
+                mProjectName = "This week";
+            } else {
+                mProjectId = bundle.getString(TaskListFragment.ARG_ITEM_ID);
+                TaskActivity.mProjectId = mProjectId;
+                mProjectName = bundle.getString(TaskListFragment.ARG_ITEM_NAME);
+                mProjectPosition = bundle.getInt(TaskListFragment.ARG_ITEM_POSITION);
+                projectList = bundle.getStringArrayList(TaskListFragment.ARG_PROJECT_LIST);
+            }
+        } else { // If the fragment was created in Portrait mode (intent), get the project id with the Intent's extra
+
+            if (mTodayView) {
+                mProjectName = "Today";
+            } else if (mWeekView) {
+                mProjectName = "This week";
+            } else {
+                mProjectId = intentThatStartedThatActivity.getStringExtra(TaskListFragment.ARG_ITEM_ID);
+                TaskActivity.mProjectId = mProjectId;
+                mProjectName = intentThatStartedThatActivity.getStringExtra(TaskListFragment.ARG_ITEM_NAME);
+                mProjectPositionStr = intentThatStartedThatActivity.getStringExtra(TaskListFragment.ARG_ITEM_POSITION);
+                mProjectPosition = Integer.valueOf(mProjectPositionStr);
+                projectList = intentThatStartedThatActivity.getStringArrayListExtra(TaskListFragment.ARG_PROJECT_LIST);
+            }
         }
 
         TaskActivity.mProjectName = mProjectName;
@@ -156,6 +196,61 @@ public class TaskListFragment extends Fragment implements
                 //StockRemoved.onRemoveStock(symbol);
             }
         }).attachToRecyclerView(taskRecyclerView);
+
+        fabAddTask.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //new AddTaskDialog().show(getActivity().getFragmentManager(), "TaskDialogFragment");
+
+                // Get the device's current orientation
+                int orientation = getResources().getConfiguration().orientation;
+
+                // If we're in two-pane mode
+                if (getResources().getBoolean(R.bool.isTablet) && orientation == ORIENTATION_LANDSCAPE) {
+                    Bundle arguments = new Bundle();
+                    if (mTodayView) {
+                        arguments.putString(AddTaskFragment.ARG_ITEM_ID, "0");
+                        arguments.putStringArrayList(AddTaskFragment.ARG_PROJECT_LIST, projectList);
+                        arguments.putString(AddTaskFragment.ARG_ITEM_NAME, "default");
+                        AddTaskFragment.mTodayView = true;
+                    } else if (mWeekView) {
+                        arguments.putString(AddTaskFragment.ARG_ITEM_ID, "0");
+                        arguments.putStringArrayList(AddTaskFragment.ARG_PROJECT_LIST, projectList);
+                        arguments.putString(AddTaskFragment.ARG_ITEM_NAME, "default");
+                        AddTaskFragment.mWeekView = true;
+                    } else {
+                        arguments.putString(AddTaskFragment.ARG_ITEM_ID, mProjectId);
+                        arguments.putString(AddTaskFragment.ARG_ITEM_NAME, mProjectName);
+                        arguments.putInt(AddTaskFragment.ARG_ITEM_POSITION, mProjectPosition);
+                        arguments.putStringArrayList(AddTaskFragment.ARG_PROJECT_LIST, projectList);
+                    }
+
+                    AddTaskFragment fragment = new AddTaskFragment();
+                    fragment.setArguments(arguments);
+                    getActivity().getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.task_list_fragment, fragment).commit();
+                } else { // If we're in Portrait mode
+                    Intent detailIntent = new Intent(getActivity(), AddTaskActivity.class);
+                    if (mTodayView) {
+                        detailIntent.putExtra(AddTaskFragment.ARG_ITEM_ID, "0");
+                        detailIntent.putStringArrayListExtra(AddTaskFragment.ARG_PROJECT_LIST, projectList);
+                        detailIntent.putExtra(AddTaskFragment.ARG_ITEM_NAME, "default");
+                        AddTaskFragment.mTodayView = true;
+                    } else if (mWeekView) {
+                        detailIntent.putExtra(AddTaskFragment.ARG_ITEM_ID, "0");
+                        detailIntent.putStringArrayListExtra(AddTaskFragment.ARG_PROJECT_LIST, projectList);
+                        detailIntent.putExtra(AddTaskFragment.ARG_ITEM_NAME, "default");
+                        AddTaskFragment.mWeekView = true;
+                    } else {
+                        detailIntent.putExtra(AddTaskFragment.ARG_ITEM_ID, mProjectId);
+                        detailIntent.putExtra(AddTaskFragment.ARG_ITEM_NAME, mProjectName);
+                        detailIntent.putExtra(AddTaskFragment.ARG_ITEM_POSITION, mProjectPositionStr);
+                        detailIntent.putStringArrayListExtra(AddTaskFragment.ARG_PROJECT_LIST, projectList);
+                    }
+                    startActivity(detailIntent);
+                }
+            }
+        });
 
         return view;
     }
@@ -194,16 +289,44 @@ public class TaskListFragment extends Fragment implements
                 String sortOrder = Contract.TaskEntry.COLUMN_TASK_DATE + " ASC";
                 // Selection of all the data
                 String selection = Contract.TaskEntry.COLUMN_TASK_PROJECT_ID;
+                String selectionToday = Contract.TaskEntry.COLUMN_TASK_DATE;
 
                 String[] mSelectionArgs = {""};
                 mSelectionArgs[0] = mProjectId;
 
-                return new CursorLoader(getActivity(),
-                        tasksQueryUri,
-                        MAIN_TASKS_PROJECTION,
-                        selection + "=?",
-                        mSelectionArgs,
-                        sortOrder);
+                Calendar clCurrent = Calendar.getInstance();
+                int currentDay = clCurrent.get(Calendar.DAY_OF_MONTH);
+                int currentMonth = clCurrent.get(Calendar.MONTH)+1;
+                int currentYear = clCurrent.get(Calendar.YEAR);
+                String currentDate = Integer.toString(currentDay)
+                        + "/" + Integer.toString(currentMonth) + "/" + Integer.toString(currentYear);
+
+                String[] mSelectionArgsToday = {""};
+                mSelectionArgsToday[0] = currentDate;
+
+                if (mTodayView) {
+                    return new CursorLoader(getActivity(),
+                            tasksQueryUri,
+                            MAIN_TASKS_PROJECTION,
+                            selectionToday + "=?",
+                            mSelectionArgsToday,
+                            sortOrder);
+                    //TODO : add the week filter
+                } else if (mWeekView) {
+                    return new CursorLoader(getActivity(),
+                            tasksQueryUri,
+                            MAIN_TASKS_PROJECTION,
+                            selectionToday + "=?",
+                            mSelectionArgsToday,
+                            sortOrder);
+                } else {
+                    return new CursorLoader(getActivity(),
+                            tasksQueryUri,
+                            MAIN_TASKS_PROJECTION,
+                            selection + "=?",
+                            mSelectionArgs,
+                            sortOrder);
+                }
 
             default:
                 throw new RuntimeException("Loader Not Implemented: " + id);
@@ -301,5 +424,7 @@ public class TaskListFragment extends Fragment implements
         if (mCursor != null) {
             mCursor.close();
         }
+        mTodayView = false;
+        mWeekView = false;
     }
 }

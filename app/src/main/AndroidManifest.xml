@@ -25,6 +25,7 @@
         <activity
             android:name=".TaskActivity"
             android:configChanges="keyboardHidden|screenSize"
+            android:launchMode="singleTop"
             android:label="@string/tasks_name"
             android:theme="@style/AppTheme"
             android:parentActivityName=".MainActivity">
@@ -32,6 +33,18 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.thibautmassard.android.masterdoer.MainActivity" />
+        </activity>
+
+        <activity
+            android:name=".AddTaskActivity"
+            android:configChanges="keyboardHidden|screenSize"
+            android:label="@string/add_task_name"
+            android:theme="@style/AppTheme"
+            android:parentActivityName=".TaskActivity">
+            <!-- The meta-data element is needed for versions lower than 4.1 -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.thibautmassard.android.masterdoer.TaskActivity" />
         </activity>
 
         <provider

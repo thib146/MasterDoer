@@ -51,11 +51,6 @@ public class TaskActivity extends AppCompatActivity {
 //        });
     }
 
-    // Handle the "Add Task" button
-    public void buttonAddTask(@SuppressWarnings("UnusedParameters") View view) {
-        new AddTaskDialog().show(this.getFragmentManager(), "TaskDialogFragment");
-    }
-
     // Add a task
     void addTask(String taskName) {
         if (taskName != null && !taskName.isEmpty()) {

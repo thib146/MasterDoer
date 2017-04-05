@@ -13,6 +13,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.thibautmassard.android.masterdoer.data.Contract;
@@ -21,12 +22,70 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Set;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
+import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+
 public class MainActivity extends AppCompatActivity {
+
+    @BindView(R.id.today_item) LinearLayout todayItem;
+    @BindView(R.id.week_item) LinearLayout weekItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        ButterKnife.bind(this);
+
+        todayItem.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String today = "today";
+                int orientation = getResources().getConfiguration().orientation;
+                boolean isTablet = getResources().getBoolean(R.bool.isTablet);
+
+                if (isTablet && orientation == ORIENTATION_LANDSCAPE) {
+                    Bundle arguments = new Bundle();
+                    arguments.putString(TaskListFragment.ARG_ITEM_TODAY, today);
+                    TaskListFragment fragment = new TaskListFragment();
+                    fragment.setArguments(arguments);
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.task_list_fragment, fragment).commit();
+                    TaskListFragment.mTodayView = true;
+                } else { // If we're in Portrait mode, open a new Detail Activity
+                    Intent detailIntent = new Intent(MainActivity.this, TaskActivity.class);
+                    detailIntent.putExtra(TaskListFragment.ARG_ITEM_TODAY, today);
+                    startActivity(detailIntent);
+                    TaskListFragment.mTodayView = true;
+                }
+            }
+        });
+
+        weekItem.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String week = "week";
+                int orientation = getResources().getConfiguration().orientation;
+                boolean isTablet = getResources().getBoolean(R.bool.isTablet);
+
+                if (isTablet && orientation == ORIENTATION_LANDSCAPE) {
+                    Bundle arguments = new Bundle();
+                    arguments.putString(TaskListFragment.ARG_ITEM_WEEK, week);
+                    TaskListFragment fragment = new TaskListFragment();
+                    fragment.setArguments(arguments);
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.task_list_fragment, fragment).commit();
+                    TaskListFragment.mWeekView = true;
+                } else { // If we're in Portrait mode, open a new Detail Activity
+                    Intent detailIntent = new Intent(MainActivity.this, TaskActivity.class);
+                    detailIntent.putExtra(TaskListFragment.ARG_ITEM_WEEK, week);
+                    startActivity(detailIntent);
+                    TaskListFragment.mWeekView = true;
+                }
+            }
+        });
 
         //Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         //setSupportActionBar(toolbar);
@@ -39,11 +98,6 @@ public class MainActivity extends AppCompatActivity {
 //                        .setAction("Action", null).show();
 //            }
 //        });
-    }
-
-    // Handle the "Add Project" button
-    public void button(@SuppressWarnings("UnusedParameters") View view) {
-        new AddProjectDialog().show(this.getFragmentManager(), "ProjectDialogFragment");
     }
 
     // Add a project
