@@ -9,8 +9,8 @@ Start by creating a new project and choosing a color. Then create tasks inside y
 # Features
 
 * Create/Edit/Delete new Projects and choose their color.
-* Create/Edit/Delete new Tasks for each project. - **Edit function in progress**
-* Each task can have a due date and a reminder (phone notification) and can also be attached to another project. - **Reminder function in progress**
+* Create/Edit/Delete new Tasks for each project.
+* Each task can have a due date and a reminder (phone notification) and can also be attached to another project.
 * Get a quick view of Today or This Week's tasks
 * Material design
 * Two-pane mode available for tablets in Landscape Mode
