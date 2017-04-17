@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "622472026575",
+    "firebase_url": "https://masterdoer-a2e7e.firebaseio.com",
+    "project_id": "masterdoer-a2e7e",
+    "storage_bucket": "masterdoer-a2e7e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:622472026575:android:b7c18f0223175260",
+        "android_client_info": {
+          "package_name": "com.thibautmassard.android.masterdoer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "622472026575-uc9b2hrs2u5hb7aeeklhe8l189lslfp0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.thibautmassard.android.masterdoer",
+            "certificate_hash": "130a54c54533d67f332b518cbacce9ec7c89cb01"
+          }
+        },
+        {
+          "client_id": "622472026575-qurd1ju7l3ned6l2ck4fpd9t02f1v8i9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDX0T4hgNVv62guFju5Zf36PhZMHIqrwlw"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "622472026575-qurd1ju7l3ned6l2ck4fpd9t02f1v8i9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

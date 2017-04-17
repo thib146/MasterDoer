@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.text.TextUtils;
 
 /**
  * Created by thib146 on 29/03/2017.
@@ -191,7 +192,8 @@ public class ToDoProvider extends ContentProvider {
                 cursor = mOpenHelper.getReadableDatabase().query(
                         Contract.TaskEntry.TABLE_NAME,
                         projection,
-                        Contract.TaskEntry.COLUMN_TASK_ID + " = ? ",
+                        Contract.TaskEntry._ID + " = " + uri.getPathSegments().get(1) +
+                                (!TextUtils.isEmpty(selection) ? "AND (" +selection + ')' : ""),
                         selectionArgs,
                         null,
                         null,
@@ -276,24 +278,28 @@ public class ToDoProvider extends ContentProvider {
     public Uri insert(@NonNull Uri uri, ContentValues values) {
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         Uri returnUri;
+        long id;
+        String idStr;
 
         switch (sUriMatcher.match(uri)) {
             case CODE_PROJECTS:
-                db.insert(
+                id = db.insert(
                         Contract.ProjectEntry.TABLE_NAME,
                         null,
                         values
                 );
-                returnUri = Contract.ProjectEntry.CONTENT_URI;
+                idStr = String.valueOf(id);
+                returnUri = Contract.TaskEntry.CONTENT_URI.buildUpon().appendPath(idStr).build();
                 break;
 
             case CODE_TASKS:
-                db.insert(
+                id = db.insert(
                         Contract.TaskEntry.TABLE_NAME,
                         null,
                         values
                 );
-                returnUri = Contract.TaskEntry.CONTENT_URI;
+                idStr = String.valueOf(id);
+                returnUri = Contract.TaskEntry.CONTENT_URI.buildUpon().appendPath(idStr).build();
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown URI:" + uri);
@@ -310,7 +316,6 @@ public class ToDoProvider extends ContentProvider {
     @Override
     public int update(@NonNull Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
-        //Uri returnUri;
         int returnInt;
 
         switch (sUriMatcher.match(uri)) {
@@ -321,8 +326,6 @@ public class ToDoProvider extends ContentProvider {
                         selection,
                         selectionArgs
                 );
-                //returnUri = Contract.ProjectEntry.CONTENT_URI;
-                //returnInt = Contract.ProjectEntry.POSITION_ID;
                 break;
 
             case CODE_TASKS:
@@ -332,8 +335,6 @@ public class ToDoProvider extends ContentProvider {
                         selection,
                         selectionArgs
                 );
-                //returnUri = Contract.TaskEntry.CONTENT_URI;
-                //returnInt = Contract.TaskEntry.POSITION_ID;
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown URI:" + uri);

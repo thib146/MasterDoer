@@ -9,7 +9,7 @@
     <!-- TASK LIST FRAGMENT -->
     <fragment
         android:id="@+id/task_list_fragment"
-        class="com.thibautmassard.android.masterdoer.TaskListFragment"
+        class="com.thibautmassard.android.masterdoer.ui.TaskListFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:layout="@layout/fragment_task_list" />

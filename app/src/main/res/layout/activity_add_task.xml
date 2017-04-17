@@ -6,10 +6,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- TASK LIST FRAGMENT -->
+    <!-- ADD TASK FRAGMENT -->
     <fragment
         android:id="@+id/add_task_fragment"
-        class="com.thibautmassard.android.masterdoer.AddTaskFragment"
+        class="com.thibautmassard.android.masterdoer.ui.AddTaskFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:layout="@layout/fragment_add_task" />

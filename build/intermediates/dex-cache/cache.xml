@@ -2,22 +2,13 @@
 <items version="2" >
 
     <item
-        is-multidex="false"
-        jar="C:\Users\thiba\.android\build-cache\8087a88fe36d65dd624519dc7d5aa94781b780d4\output\jars\classes.jar"
-        jumboMode="false"
+        is-multidex="true"
+        jar="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\incremental-classes\debug\instant-run-bootstrap.jar"
+        jumboMode="true"
         optimize="true"
         revision="25.0.2"
-        sha1="38789e20ace9ab7dbd00554bd2673ab424478d3b">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\pre-dexed\debug\classes_e7edcfe196b709efa9ff316215d139571cb0f440.jar" />
-    </item>
-    <item
-        is-multidex="false"
-        jar="C:\Users\thiba\.android\build-cache\37305ae16da886bfe58f00fd229c8d3469815b67\output\jars\classes.jar"
-        jumboMode="false"
-        optimize="true"
-        revision="25.0.2"
-        sha1="efb8cb62d47d157c29d1521daac7eefd4cb881ee">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\pre-dexed\debug\classes_49910cf746cbd2807d89292330ca886de64d3aec.jar" />
+        sha1="4e09835ecdd1407b394ad64192980fa093def93a">
+        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\transforms\dex\debug\folders\1000\10000\instant-run-bootstrap_d1841cd70caf4dae68ff4e2533c17d9b7bfebb8c\classes.dex" />
     </item>
     <item
         is-multidex="true"
@@ -25,161 +16,8 @@
         jumboMode="true"
         optimize="true"
         revision="25.0.2"
-        sha1="c82741bc129dd5f99f11a4ab8666ae24262053b6">
+        sha1="510aa6efc159983dfbffa676a0dae37568c0a46f">
         <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\transforms\dex\debug\folders\1000\10000\instant-run_cbc04181709a3ce64777efc6575d8c4cd816d77a\classes.dex" />
-    </item>
-    <item
-        is-multidex="false"
-        jar="C:\Users\thiba\.android\build-cache\1c0905fa29d1a3e4e4ff75690b83d0276982a157\output\jars\classes.jar"
-        jumboMode="false"
-        optimize="true"
-        revision="25.0.2"
-        sha1="4a26a1154d053ab11aaf4c3967c42a4d66390991">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\pre-dexed\debug\classes_1757bf44c772c68ca7c0b8123ddf061714047fb8.jar" />
-    </item>
-    <item
-        is-multidex="false"
-        jar="C:\Users\thiba\.android\build-cache\408a9ad5fb1ab4d8012548ac99749cdc15281694\output\jars\classes.jar"
-        jumboMode="false"
-        optimize="true"
-        revision="25.0.2"
-        sha1="6ef31f1555bb4cc513ec8d52711365a8b89f3600">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\pre-dexed\debug\classes_40c514119cf7dcc7c97b136d56e7430db114591c.jar" />
-    </item>
-    <item
-        is-multidex="false"
-        jar="C:\Users\thiba\.android\build-cache\a466fcd90610c5ebe610294426eb49efac49f696\output\jars\classes.jar"
-        jumboMode="false"
-        optimize="true"
-        revision="25.0.2"
-        sha1="d4cf6227dd6a2ceff0f7dcf0c324380b7abf2c28">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\pre-dexed\debug\classes_c759baa191579f0a876a8e4795594569ea2bd6c8.jar" />
-    </item>
-    <item
-        is-multidex="false"
-        jar="C:\Users\thiba\.android\build-cache\5a0d4d87b99fe48f2c9d0cc812cb34c692617367\output\jars\classes.jar"
-        jumboMode="false"
-        optimize="true"
-        revision="25.0.2"
-        sha1="95519720620b553f63afc789beba9ad582807f7c">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\pre-dexed\debug\classes_e1ed39c24cdb3f2dbd8f53b14fab6cb8d0ac4a2a.jar" />
-    </item>
-    <item
-        is-multidex="false"
-        jar="C:\Users\thiba\.android\build-cache\b2f8a9d0c72eaffdcf5870efa189d792df239279\output\jars\classes.jar"
-        jumboMode="false"
-        optimize="true"
-        revision="25.0.2"
-        sha1="da27a32db6af8954ee8061537c7d476fcb1df46f">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\pre-dexed\debug\classes_b5d1c488299f424944410aa4ec9a7ac44540d7e8.jar" />
-    </item>
-    <item
-        is-multidex="false"
-        jar="C:\Users\thiba\.android\build-cache\49e2b378e7fa59713b59f3a07f92b3b8ca7d668d\output\jars\classes.jar"
-        jumboMode="false"
-        optimize="true"
-        revision="25.0.2"
-        sha1="150252b33b00274cc868578ade018fda0d43a3eb">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\pre-dexed\debug\classes_574dd15350c879cdedbab2cfa4be1425ace92655.jar" />
-    </item>
-    <item
-        is-multidex="false"
-        jar="C:\Users\thiba\.android\build-cache\f5ededc37acf4af32f1ab1ed8ce4560096be605f\output\jars\classes.jar"
-        jumboMode="false"
-        optimize="true"
-        revision="25.0.2"
-        sha1="a07818a1ecabdb149998823429cce555af4b9cba">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\pre-dexed\debug\classes_77c7431acd88f38497be1d47aa0eed005025bbc7.jar" />
-    </item>
-    <item
-        is-multidex="true"
-        jar="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\incremental-classes\debug\instant-run-bootstrap.jar"
-        jumboMode="true"
-        optimize="true"
-        revision="25.0.2"
-        sha1="2984ce8c1e6aeef5f71c18ddb99be989bc6b2c24">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\transforms\dex\debug\folders\1000\10000\instant-run-bootstrap_d1841cd70caf4dae68ff4e2533c17d9b7bfebb8c\classes.dex" />
-    </item>
-    <item
-        is-multidex="false"
-        jar="C:\Users\thiba\.android\build-cache\c475b78e626ec85f30a6b06be2b2e303cd74c428\output\jars\classes.jar"
-        jumboMode="false"
-        optimize="true"
-        revision="25.0.2"
-        sha1="76182d2ede06926e942e5a947a130b915b83a489">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\pre-dexed\debug\classes_06786307eeaab783a2a9e1aeca23f68b715ddbc0.jar" />
-    </item>
-    <item
-        is-multidex="false"
-        jar="C:\Users\thiba\.android\build-cache\53156846632f5b1e7c98461167c3e1483de0736d\output\jars\classes.jar"
-        jumboMode="false"
-        optimize="true"
-        revision="25.0.2"
-        sha1="d7c42c80f6509b9ea4db28ca7859ffae08ec5741">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\pre-dexed\debug\classes_c6816e5fbe134ea3a880930685faf85fb0f542d4.jar" />
-    </item>
-    <item
-        is-multidex="false"
-        jar="C:\Users\thiba\AppData\Local\Android\sdk\extras\m2repository\com\android\support\constraint\constraint-layout-solver\1.0.0-beta5\constraint-layout-solver-1.0.0-beta5.jar"
-        jumboMode="false"
-        optimize="true"
-        revision="25.0.2"
-        sha1="ff0dad5e4fc720f478ce8b5f6edf76a932d9b886">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\pre-dexed\debug\constraint-layout-solver-1.0.0-beta5_bc00213ecb7486f27f9ad3aea5715d0c886d1372.jar" />
-    </item>
-    <item
-        is-multidex="false"
-        jar="C:\Users\thiba\AppData\Local\Android\sdk\extras\android\m2repository\com\android\support\support-annotations\25.3.1\support-annotations-25.3.1.jar"
-        jumboMode="false"
-        optimize="true"
-        revision="25.0.2"
-        sha1="bf8841d29fa39e077730e7a91222c2ce269fa7c9">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\pre-dexed\debug\support-annotations-25.3.1_1526f094bf3896caef8b32c149948468c5c48163.jar" />
-    </item>
-    <item
-        is-multidex="false"
-        jar="C:\Users\thiba\.android\build-cache\ba47c16f6ccd7259cc171ee2fc74dfd52a7ead87\output\jars\classes.jar"
-        jumboMode="false"
-        optimize="true"
-        revision="25.0.2"
-        sha1="052f5f840f21174a3ecf6544130194e2652cbb73">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\pre-dexed\debug\classes_dee7bd0c01591ce9492f96b63346c125bd02d837.jar" />
-    </item>
-    <item
-        is-multidex="false"
-        jar="C:\Users\thiba\.gradle\caches\modules-2\files-2.1\com.jakewharton\butterknife-annotations\8.4.0\ea392375cf9ff59234a82e7928a204215ccc98cd\butterknife-annotations-8.4.0.jar"
-        jumboMode="false"
-        optimize="true"
-        revision="25.0.2"
-        sha1="ea392375cf9ff59234a82e7928a204215ccc98cd">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\pre-dexed\debug\butterknife-annotations-8.4.0_5328f8fe4c102c507a11402a4d26ab6627f008ba.jar" />
-    </item>
-    <item
-        is-multidex="false"
-        jar="C:\Users\thiba\.android\build-cache\d641ba93945f70e52eb779ad0235c60c2ae1f529\output\jars\classes.jar"
-        jumboMode="false"
-        optimize="true"
-        revision="25.0.2"
-        sha1="47635644d0d5c103c1dd8360549eb9ba3225c7d3">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\pre-dexed\debug\classes_7337ff33df2eefa7632c8822ec7a0b9d8569c90a.jar" />
-    </item>
-    <item
-        is-multidex="false"
-        jar="C:\Users\thiba\.android\build-cache\94d757199edbc181a704725ffd7cf0f65c514780\output\jars\classes.jar"
-        jumboMode="false"
-        optimize="true"
-        revision="25.0.2"
-        sha1="45f697922e6f072daa12f8a2995dc77ab03c11da">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\pre-dexed\debug\classes_ba0899354a8a982e2c9c598f5fa0a732d8b96260.jar" />
-    </item>
-    <item
-        is-multidex="false"
-        jar="C:\Users\thiba\.android\build-cache\b4229a386bf762a14931a01635044c2f732e88f3\output\jars\classes.jar"
-        jumboMode="false"
-        optimize="true"
-        revision="25.0.2"
-        sha1="dce0f3de11781e1ee758cba483871b598c9d4931">
-        <dex dex="C:\Users\thiba\Desktop\MasterDoer\app\build\intermediates\pre-dexed\debug\classes_99483803fdad3578054c845c4115b8ec2e766982.jar" />
     </item>
 
 </items>

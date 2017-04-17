@@ -16,7 +16,7 @@
         android:layout_marginStart="4dp"
         android:layout_marginTop="16dp"
         android:hint="@string/task_dialog_hint"
-        android:imeOptions="actionDone" />
+        android:imeOptions="actionGo" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -45,6 +45,7 @@
             android:layout_marginRight="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="16dp"
+            android:focusable="false"
             android:hint="@string/add_task_date_picker_hint"
             android:imeOptions="actionDone" />
     </LinearLayout>
@@ -56,19 +57,34 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
             android:textSize="18sp"
             android:text="@string/add_task_priority_title"
             android:layout_marginBottom="4dp"
             android:layout_marginLeft="8dp"
             android:layout_marginEnd="4dp"
             android:layout_marginRight="4dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="16dp"/>
+            android:layout_marginStart="8dp"/>
 
         <NumberPicker
             android:id="@+id/add_task_priority_picker"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_width="90dp"
+            android:orientation="horizontal"
+            android:layout_height="90dp"/>
+
+        <TextView
             android:layout_width="wrap_content"
-            android:layout_height="50dp"/>
+            android:layout_height="wrap_content"
+            android:id="@+id/add_task_priority_description"
+            android:layout_gravity="center_vertical"
+            android:textSize="18sp"
+            android:layout_marginBottom="4dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="16dp"
+            tools:text="none"/>
     </LinearLayout>
 
     <LinearLayout
@@ -124,6 +140,7 @@
             android:layout_marginRight="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="16dp"
+            android:focusable="false"
             android:hint="@string/add_task_reminder_hint"
             android:imeOptions="actionDone" />
     </LinearLayout>
@@ -149,14 +166,5 @@
             android:layout_marginLeft="60dp"
             android:text="@string/add_task_button_add"/>
     </LinearLayout>
-
-    <!--<DatePicker-->
-        <!--android:id="@+id/datePicker"-->
-        <!--android:startYear="2017"-->
-        <!--android:layout_gravity="center"-->
-        <!--android:datePickerMode="spinner"-->
-        <!--android:calendarViewShown="false"-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="100dp" />-->
 
 </LinearLayout>
