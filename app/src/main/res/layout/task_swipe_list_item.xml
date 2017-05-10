@@ -21,7 +21,8 @@
             android:orientation="horizontal"
             android:layout_width="120dp"
             android:weightSum="1"
-            android:layout_height="match_parent">
+            android:background="?android:attr/selectableItemBackground"
+            android:layout_height="wrap_content">
             <!--What you want to show-->
             <ImageView
                 android:id="@+id/task_edit_button"
@@ -49,8 +50,9 @@
             android:id="@+id/task_surface_view_start"
             android:layout_width="match_parent"
             android:minHeight="?android:attr/listPreferredItemHeight"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:gravity="center_vertical"
+            android:background="?android:attr/selectableItemBackground"
             android:orientation="horizontal"
             android:layout_marginEnd="16dp"
             android:layout_marginRight="16dp"
@@ -85,9 +87,9 @@
 
             <TextView
                 android:id="@+id/task_date"
-                android:layout_width="70dp"
+                android:layout_width="76dp"
                 android:layout_height="wrap_content"
-                tools:text="31/12/17"
+                tools:text="31/12/1969"
                 android:layout_marginLeft="4dp"
                 android:layout_marginStart="4dp"
                 android:layout_marginEnd="16dp"

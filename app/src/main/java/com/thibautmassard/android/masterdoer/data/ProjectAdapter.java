@@ -13,6 +13,8 @@ import android.widget.TextView;
 
 import com.chauthai.swipereveallayout.SwipeRevealLayout;
 import com.chauthai.swipereveallayout.ViewBinderHelper;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.thibautmassard.android.masterdoer.R;
 
 import java.util.ArrayList;
@@ -24,25 +26,31 @@ import butterknife.ButterKnife;
  * Created by thib146 on 29/03/2017.
  */
 
-public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectViewHolder> {
+public class ProjectAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private final Context context;
     private Cursor mProjectCursor;
+    private Project mProject;
+
+    private DatabaseReference mFirebaseDatabaseRef;
 
     // Set up the click handlers
     private final ProjectAdapter.ProjectAdapterOnClickHandler clickHandler;
     private final ProjectAdapter.ProjectAdapterOnClickHandler clickHandlerDelete;
     private final ProjectAdapter.ProjectAdapterOnClickHandler clickHandlerEdit;
+    private final ProjectAdapter.ProjectAdapterOnClickHandler clickHandlerAddProject;
+
+    private static int VIEW_TYPE_FOOTER = 146;
+    private static int VIEW_TYPE_CELL = 147;
+
+    private ArrayList<String> projectTaskNumberList;
+    private ArrayList<String> projectTaskDoneList;
 
     // This object helps save/restore the swiped/unswiped state of each view
     private final ViewBinderHelper viewBinderHelper = new ViewBinderHelper();
 
-    private int mTaskNumber;
-    private int mTaskNumberDone;
-
     public static final String[] MAIN_TASKS_PROJECTION = {
             Contract.TaskEntry._ID,
-            Contract.TaskEntry.COLUMN_TASK_ID,
             Contract.TaskEntry.COLUMN_TASK_PROJECT_ID,
             Contract.TaskEntry.COLUMN_TASK_NAME,
             Contract.TaskEntry.COLUMN_TASK_DATE,
@@ -53,12 +61,17 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
 
     // Constructor
     public ProjectAdapter (Context context, ProjectAdapter.ProjectAdapterOnClickHandler clickHandler,
-                    ProjectAdapter.ProjectAdapterOnClickHandler clickHandlerDelete,
-                    ProjectAdapter.ProjectAdapterOnClickHandler clickHandlerEdit) {
+                           ProjectAdapter.ProjectAdapterOnClickHandler clickHandlerDelete,
+                           ProjectAdapter.ProjectAdapterOnClickHandler clickHandlerEdit,
+                           ProjectAdapter.ProjectAdapterOnClickHandler clickHandlerAddProject,
+                           ArrayList<String> projectTaskNumberList, ArrayList<String> projectTaskDoneList) {
         this.context = context;
         this.clickHandler = clickHandler;
         this.clickHandlerDelete = clickHandlerDelete;
         this.clickHandlerEdit = clickHandlerEdit;
+        this.clickHandlerAddProject = clickHandlerAddProject;
+        this.projectTaskNumberList = projectTaskNumberList;
+        this.projectTaskDoneList = projectTaskDoneList;
         viewBinderHelper.setOpenOnlyOne(true); // Forces only one item to be swiped at a time
     }
 
@@ -68,75 +81,122 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
     }
 
     @Override
+    public int getItemViewType(int position) {
+        return (position == mProjectCursor.getCount()) ? VIEW_TYPE_FOOTER : VIEW_TYPE_CELL;
+    }
+
+    public void setTasksNumbers(ArrayList<String> projectTaskNumberList, ArrayList<String> projectTaskDoneList) {
+        this.projectTaskNumberList = projectTaskNumberList;
+        this.projectTaskDoneList = projectTaskDoneList;
+    }
+
+    @Override
     public int getItemCount() {
         int count = 0;
         if (mProjectCursor != null) {
-            count = mProjectCursor.getCount();
+            count = mProjectCursor.getCount()+1;
         }
         return count;
     }
 
     @Override
-    public ProjectAdapter.ProjectViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
-        View item = LayoutInflater.from(context).inflate(R.layout.project_swipe_list_item, parent, false);
+        mFirebaseDatabaseRef = FirebaseDatabase.getInstance().getReference();
 
-        return new ProjectAdapter.ProjectViewHolder(item);
+        View item;
+        if (viewType == VIEW_TYPE_CELL) {
+            item = LayoutInflater.from(context).inflate(R.layout.project_swipe_list_item, parent, false);
+            return new ProjectAdapter.ProjectViewHolder(item);
+        } else {
+            item = LayoutInflater.from(context).inflate(R.layout.add_project_item, parent, false);
+            return new ProjectAdapter.FooterViewHolder(item);
+        }
     }
 
     @Override
-    public void onBindViewHolder(ProjectAdapter.ProjectViewHolder holder, final int position) {
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
 
-        mProjectCursor.moveToPosition(position);
+        if (holder instanceof ProjectViewHolder) {
+            ProjectViewHolder projectHolder = (ProjectViewHolder) holder;
 
-        String projectId = mProjectCursor.getString(Contract.ProjectEntry.POSITION_ID);
+            mProjectCursor.moveToPosition(position);
+            mProject = new Project(mProjectCursor);
 
-        // Save/restore the swiped/unswiped state.
-        viewBinderHelper.bind(holder.projectSwipeRevealLayout, projectId);
+            // Save/restore the swiped/unswiped state.
+            viewBinderHelper.bind(projectHolder.projectSwipeRevealLayout, mProject.id);
 
-        // Set the Project Name
-        holder.projectName.setText(mProjectCursor.getString(Contract.ProjectEntry.POSITION_PROJECT_NAME));
+            // Set the Project Name
+            projectHolder.projectName.setText(mProject.name);
 
-        // Set the project creation date
-        holder.projectCreationDate.setText(mProjectCursor.getString(Contract.ProjectEntry.POSITION_PROJECT_DATE));
+            // Set the project creation date
+            projectHolder.projectCreationDate.setText(DateFormatter.formatDate(mProject.date));
 
-        // Set the Project's bullet point color
-        String projectColor = mProjectCursor.getString(Contract.ProjectEntry.POSITION_PROJECT_COLOR);
-        setProjectColor(projectColor, holder);
+            // Set the Project's bullet point color
+            setProjectColor(mProject.color, projectHolder);
 
-        // Get the numbers of tasks of this project (stored in the pos 0), and the number of DONE tasks (stored in the pos 1)
-        int[] taskNumbers = getProjectTaskNumbers();
+            // Get the numbers of tasks of this project (stored in the pos 0), and the number of DONE tasks (stored in the pos 1)
+            //int[] taskNumbers = getProjectTaskNumbers(mProject.id);
 
-        float percentage;
+            // Get the number of tasks (total + done) from Firebase database
+            //String taskNumber = mProject.taskNumber;
+            //String taskDone = mProject.taskDone;
 
-        if (taskNumbers[0]!=0) {
-            percentage = taskNumbers[1] * 100 / taskNumbers[0];
+            String taskNumber = "0";
+            String taskDone = "0";
+            if (position < projectTaskNumberList.size()) {
+                taskNumber = projectTaskNumberList.get(position);
+            }
+            if (position < projectTaskDoneList.size()) {
+                taskDone = projectTaskDoneList.get(position);
+            }
+
+            //String taskNumber = projectTaskNumberList.get(0);
+            //String taskDone = projectTaskDoneList.get(0);
+
+            float percentage;
+
+            //if (taskNumbers[0]!=0) {
+            if (!taskNumber.equals("0")) {
+                //percentage = taskNumbers[1] * 100 / taskNumbers[0];
+                percentage = Integer.valueOf(taskDone) * 100 / Integer.valueOf(taskNumber);
+            } else {
+                percentage = 0;
+            }
+
+            String percentageStrValue = String.format("%d", (long) percentage); // Used to color the number's background
+            String percentageStr = String.format("%d", (long) percentage) + "%"; // Used to display
+
+            // Set the number of tasks remaining
+            //String tasksCount = taskNumbers[1] + "/" + taskNumbers[0];
+            String tasksCount = taskDone + "/" + taskNumber;
+            projectHolder.projectTasksRemaining.setText(tasksCount);
+
+            // Set the percentage completed
+            projectHolder.projectPercentageCompleted.setText(percentageStr);
+
+            // Set the percentage background color
+            int percentageInt = Integer.parseInt(percentageStrValue);
+            setProjectPercentageColor(percentageInt, projectHolder);
+
+            projectHolder.bind(mProject.id);
         } else {
-            percentage = 0;
+            FooterViewHolder footerHolder = (FooterViewHolder) holder;
+
+            footerHolder.addProjectButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    clickHandlerAddProject.onClick("0", "add_project");
+                }
+            });
         }
-
-        String percentageStrValue = String.format("%d", (long) percentage); // Used to color the number's background
-        String percentageStr = String.format("%d", (long) percentage) + "%"; // Used to display
-
-        // Set the number of tasks remaining
-        String tasksCount = taskNumbers[1] + "/" + taskNumbers[0];
-        holder.projectTasksRemaining.setText(tasksCount);
-
-        // Set the percentage completed
-        holder.projectPercentageCompleted.setText(percentageStr);
-
-        // Set the percentage background color
-        int percentageInt = Integer.parseInt(percentageStrValue);
-        setProjectPercentageColor(percentageInt, holder);
-
-        holder.bind(projectId);
     }
 
-    private int[] getProjectTaskNumbers() {
+    private int[] getProjectTaskNumbers(String projectId) {
         int taskNumber, taskNumberDone = 0;
 
         String[] mSelectionArgs = {""};
-        mSelectionArgs[0] = mProjectCursor.getString(Contract.ProjectEntry.POSITION_ID);
+        mSelectionArgs[0] = projectId;
 
         // Get all the tasks of this project in order to get the number and display it in the indicator
         Cursor taskCursor = context.getContentResolver().query(
@@ -222,12 +282,13 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
         ProjectViewHolder(View itemView) {
             super(itemView);
             ButterKnife.bind(this, itemView);
+
             itemView.setOnClickListener(this);
         }
 
         /**
          * Handling the different possible clicks (item, edit, delete) on a project item
-         * @param projectId
+         * @param projectId project ID
          */
         public void bind (final String projectId) {
             projectSurfaceViewStart.setOnClickListener(new View.OnClickListener() {
@@ -256,6 +317,22 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
                     viewBinderHelper.closeLayout(projectId);
                 }
             });
+        }
+
+        @Override
+        public void onClick(View v) {
+        }
+    }
+
+    class FooterViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+
+        @BindView(R.id.add_project_row) LinearLayout addProjectButton;
+
+        FooterViewHolder(View itemView) {
+            super(itemView);
+            ButterKnife.bind(this, itemView);
+
+            itemView.setOnClickListener(this);
         }
 
         @Override

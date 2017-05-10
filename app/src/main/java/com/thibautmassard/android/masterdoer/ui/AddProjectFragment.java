@@ -2,6 +2,8 @@ package com.thibautmassard.android.masterdoer.ui;
 
 import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.res.ResourcesCompat;
@@ -13,12 +15,21 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.thibautmassard.android.masterdoer.R;
 import com.thibautmassard.android.masterdoer.data.Contract;
 import com.thibautmassard.android.masterdoer.data.DateFormatter;
+import com.thibautmassard.android.masterdoer.data.Project;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -31,7 +42,7 @@ import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 
 public class AddProjectFragment extends Fragment {
 
-    // Get all the elements
+    // Get all the visual elements
     @BindView(R.id.add_project_name_edit_text) EditText addProjectNameEditText;
     @BindView(R.id.add_project_date_edit_text) EditText addProjectDateEditText;
     @BindView(R.id.project_color_green) ImageView projectColorGreen;
@@ -50,12 +61,19 @@ public class AddProjectFragment extends Fragment {
     public static final String ARG_ITEM_NAME = "item_name";
     public static final String ARG_ITEM_COLOR = "item_color";
     public static final String ARG_ITEM_DATE = "item_date";
+    public static final String ARG_ITEM_TASK_NUMBER = "item_task_number";
+    public static final String ARG_ITEM_TASK_DONE = "item_task_done";
 
-    // Project data
-    private String mProjectName;
-    private String mProjectId;
-    private String mProjectColor;
-    private String mProjectDate;
+    public static final String ARG_MAX_PROJECT_ID = "max_project_id";
+
+    private long projectDateMillis;
+
+    private long mMaxProjectId;
+
+    // Project object
+    private Project mProject;
+
+    private DatabaseReference mFirebaseDatabaseRef;
 
     // Global boolean to know if we're editing a project or creating a new one
     boolean mEditMode = false;
@@ -67,25 +85,33 @@ public class AddProjectFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_add_project, container, false);
         ButterKnife.bind(this, view);
 
+        mFirebaseDatabaseRef = FirebaseDatabase.getInstance().getReference();
+
         // Get the intent that started the activity
         Intent intentThatStartedThatActivity = getActivity().getIntent();
         Bundle bundle = getArguments();
 
         // Get the data from the intent
         if (bundle != null) { // If the fragment was created in Landscape Mode, get the project id with the Fragment's arguments
-            mProjectId = bundle.getString(AddProjectFragment.ARG_ITEM_ID);
-            mProjectName = bundle.getString(AddProjectFragment.ARG_ITEM_NAME);
-            mProjectColor = bundle.getString(AddProjectFragment.ARG_ITEM_COLOR);
-            mProjectDate = bundle.getString(AddProjectFragment.ARG_ITEM_DATE);
+            mMaxProjectId = bundle.getLong(AddProjectFragment.ARG_MAX_PROJECT_ID);
+            mProject = new Project(bundle.getString(AddProjectFragment.ARG_ITEM_ID),
+                                    bundle.getString(AddProjectFragment.ARG_ITEM_NAME),
+                                    bundle.getString(AddProjectFragment.ARG_ITEM_DATE),
+                                    bundle.getString(AddProjectFragment.ARG_ITEM_COLOR),
+                                    bundle.getString(AddProjectFragment.ARG_ITEM_TASK_NUMBER),
+                                    bundle.getString(AddProjectFragment.ARG_ITEM_TASK_DONE));
         } else if (intentThatStartedThatActivity != null) { // If the fragment was created in Portrait mode (intent), get the project id with the Intent's extra
-            mProjectId = intentThatStartedThatActivity.getStringExtra(AddProjectFragment.ARG_ITEM_ID);
-            mProjectName = intentThatStartedThatActivity.getStringExtra(AddProjectFragment.ARG_ITEM_NAME);
-            mProjectColor = intentThatStartedThatActivity.getStringExtra(AddProjectFragment.ARG_ITEM_COLOR);
-            mProjectDate = intentThatStartedThatActivity.getStringExtra(AddProjectFragment.ARG_ITEM_DATE);
+            mMaxProjectId = intentThatStartedThatActivity.getLongExtra(AddProjectFragment.ARG_MAX_PROJECT_ID, 0);
+            mProject = new Project(intentThatStartedThatActivity.getStringExtra(AddProjectFragment.ARG_ITEM_ID),
+                                    intentThatStartedThatActivity.getStringExtra(AddProjectFragment.ARG_ITEM_NAME),
+                                    intentThatStartedThatActivity.getStringExtra(AddProjectFragment.ARG_ITEM_DATE),
+                                    intentThatStartedThatActivity.getStringExtra(AddProjectFragment.ARG_ITEM_COLOR),
+                                    intentThatStartedThatActivity.getStringExtra(AddProjectFragment.ARG_ITEM_TASK_NUMBER),
+                                    intentThatStartedThatActivity.getStringExtra(AddProjectFragment.ARG_ITEM_TASK_DONE));
         }
 
         // Check if we're editing the project or not
-        if (mProjectId != null) {
+        if (mProject.id != null) {
             mEditMode = true;
         }
 
@@ -94,11 +120,11 @@ public class AddProjectFragment extends Fragment {
         final String currentDate = DateFormatter.formatDate(clCurrent);
 
         if (mEditMode) { // If we're editing a project
-            addProjectNameEditText.setText(mProjectName);
-            addProjectDateEditText.setText(mProjectDate);
+            addProjectNameEditText.setText(mProject.name);
+            addProjectDateEditText.setText(DateFormatter.formatDate(mProject.date));
             addProjectButtonAdd.setText(getActivity().getResources().getString(R.string.add_project_update_button));
 
-            int colorIndex = selectSavedColor(mProjectColor);
+            int colorIndex = selectSavedColor(mProject.color);
             colors = selectColor(colorIndex, colors);
         } else { // If we're creating a new project
             addProjectDateEditText.setText(currentDate);
@@ -237,7 +263,6 @@ public class AddProjectFragment extends Fragment {
      */
     private void addOrUpdateProject(String projectName, boolean[] colors) {
 
-        int i = 1;
         String color = "green";
 
         if (colors[0]) {
@@ -251,30 +276,62 @@ public class AddProjectFragment extends Fragment {
         }
 
         String projectDate = addProjectDateEditText.getText().toString();
+        long projectDateMillis = DateFormatter.dateToMillis(projectDate);
+        projectDate = String.valueOf(projectDateMillis);
+
+        String taskNumber;
+        String taskDone;
+        if (mProject.taskNumber != null) {
+            taskNumber = mProject.taskNumber;
+            taskDone = mProject.taskDone;
+        } else {
+            taskNumber = "0";
+            taskDone = "0";
+        }
 
         // Create a ContentValues to insert or update the project
         ContentValues projectValue = new ContentValues();
-        projectValue.put(Contract.ProjectEntry.COLUMN_PROJECT_ID, i);
         projectValue.put(Contract.ProjectEntry.COLUMN_PROJECT_NAME, projectName);
         projectValue.put(Contract.ProjectEntry.COLUMN_PROJECT_DATE, projectDate);
         projectValue.put(Contract.ProjectEntry.COLUMN_PROJECT_COLOR, color);
+        projectValue.put(Contract.ProjectEntry.COLUMN_PROJECT_TASK_NUMBER, taskNumber);
+        projectValue.put(Contract.ProjectEntry.COLUMN_PROJECT_TASK_DONE, taskDone);
 
-        ArrayList<ContentValues> projectValuesContent = new ArrayList<ContentValues>();
-        projectValuesContent.add(projectValue);
+        //ArrayList<ContentValues> projectValuesContent = new ArrayList<ContentValues>();
+        //projectValuesContent.add(projectValue);
 
-        if (mEditMode) { // If we're editing a project, update it
-            String[] mSelectionArgs = {""};
-            mSelectionArgs[0] = mProjectId; // The project we're updating
+        Uri projectUri = null;
 
-            getActivity().getContentResolver().update(
-                    Contract.ProjectEntry.CONTENT_URI,
-                    projectValue,
-                    Contract.ProjectEntry._ID + "=?",
-                    mSelectionArgs);
-        } else { // If we're creating a new project, insert a new item
-            getActivity().getContentResolver().bulkInsert(
-                    Contract.ProjectEntry.CONTENT_URI,
-                    projectValuesContent.toArray(new ContentValues[1]));
+//        if (mEditMode) { // If we're editing a project, update it
+//            String[] mSelectionArgs = {""};
+//            mSelectionArgs[0] = mProject.id; // The project we're updating
+//
+//            getActivity().getContentResolver().update(
+//                    Contract.ProjectEntry.CONTENT_URI,
+//                    projectValue,
+//                    Contract.ProjectEntry._ID + "=?",
+//                    mSelectionArgs);
+//        } else { // If we're creating a new project, insert a new item
+//            projectUri = getActivity().getContentResolver().insert(
+//                    Contract.ProjectEntry.CONTENT_URI,
+//                    projectValue);
+//        }
+
+        String projectId;
+        if (mEditMode) {
+            projectId = mProject.id;
+        } else {
+            projectId = String.valueOf(mMaxProjectId + 1);
+        }
+
+        Project project = new Project(projectId, projectName, projectDate, color, taskNumber, taskDone);
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            mFirebaseDatabaseRef.child("users").child(user.getUid()).child("projects").child(projectId).setValue(project);
+            if (!mEditMode) {
+                mFirebaseDatabaseRef.child("users").child(user.getUid()).child("maxProjectId").setValue(mMaxProjectId + 1);
+            }
         }
 
         // Get the device's current orientation

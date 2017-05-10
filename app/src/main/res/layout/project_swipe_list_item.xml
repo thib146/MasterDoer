@@ -20,6 +20,7 @@
             android:id="@+id/bottom_wrapper"
             android:orientation="horizontal"
             android:layout_width="120dp"
+            android:background="?android:attr/selectableItemBackground"
             android:weightSum="1"
             android:layout_height="match_parent">
             <!--What you want to show-->
@@ -52,6 +53,7 @@
             android:layout_height="match_parent"
             android:gravity="center_vertical"
             android:orientation="horizontal"
+            android:background="?android:attr/selectableItemBackground"
             android:layout_marginEnd="16dp"
             android:layout_marginRight="16dp"
             android:weightSum="1">

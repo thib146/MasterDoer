@@ -95,7 +95,14 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         holder.taskName.setText(mTaskCursor.getString(Contract.TaskEntry.POSITION_TASK_NAME));
 
         // Set the Task's Due Date
-        holder.taskDueDate.setText(mTaskCursor.getString(Contract.TaskEntry.POSITION_TASK_DATE));
+        String dateMillisStr = mTaskCursor.getString(Contract.TaskEntry.POSITION_TASK_DATE);
+        String taskDate;
+        if (!dateMillisStr.equals("")) {
+            taskDate = DateFormatter.formatDate(mTaskCursor.getString(Contract.TaskEntry.POSITION_TASK_DATE));
+        } else {
+            taskDate = "";
+        }
+        holder.taskDueDate.setText(taskDate);
 
         // Set the Task's Status
         String taskStatus = mTaskCursor.getString(Contract.TaskEntry.POSITION_TASK_STATUS);
@@ -133,7 +140,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
 
     public interface TaskAdapterOnClickHandler {
         void onClick(String taskId, String button);
-        void passTaskStatus(String taskId, int taskStatus);
+        void passTaskStatus(String taskId, String taskProjectId, int position, int taskStatus);
     }
 
     class TaskViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -164,11 +171,13 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
                     mTaskCursor.moveToPosition(getAdapterPosition());
 
                     String taskId = mTaskCursor.getString(mTaskCursor.getColumnIndex(Contract.TaskEntry._ID));
+                    String taskProjectId = mTaskCursor.getString(mTaskCursor.getColumnIndex(Contract.TaskEntry.COLUMN_TASK_PROJECT_ID));
                     int taskStatus = mTaskCursor.getInt(Contract.TaskEntry.POSITION_TASK_STATUS);
 
+                    int pos = getAdapterPosition();
                     // Change the task status after click and pass the status
                     taskStatus = taskStatus == 0 ? 1 : 0;
-                    clickHandler.passTaskStatus(taskId, taskStatus);
+                    clickHandler.passTaskStatus(taskId, taskProjectId, pos, taskStatus);
                 }
             });
             taskEditButton.setOnClickListener(new View.OnClickListener() {
@@ -194,7 +203,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         public void onClick(View v) {
             TaskAdapterPosition = getAdapterPosition();
             mTaskCursor.moveToPosition(TaskAdapterPosition);
-            int taskIdColumn = mTaskCursor.getColumnIndex(Contract.TaskEntry.COLUMN_TASK_ID);
+            int taskIdColumn = mTaskCursor.getColumnIndex(Contract.TaskEntry._ID);
             clickHandler.onClick(mTaskCursor.getString(taskIdColumn), "item");
         }
     }

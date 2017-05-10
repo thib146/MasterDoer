@@ -65,7 +65,7 @@ public class EditTaskReminderDialog extends DialogFragment {
 
         // Set the minimum authorized date on the datepicker as Today
         Calendar c = Calendar.getInstance();
-        datePicker.setMinDate(c.getTimeInMillis());
+        datePicker.setMinDate(c.getTimeInMillis() - 1000);
 
         builder.setMessage(getString(R.string.edit_reminder_dialog_datepicker_title));
         builder.setPositiveButton(getString(R.string.edit_reminder_dialog_set),

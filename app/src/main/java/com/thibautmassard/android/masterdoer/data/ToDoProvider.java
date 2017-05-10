@@ -79,8 +79,6 @@ public class ToDoProvider extends ContentProvider {
                 int rowsInsertedProj = 0;
                 try {
                     for (ContentValues value : values) {
-                        long projectId = value.getAsLong(Contract.ProjectEntry.COLUMN_PROJECT_ID);
-
                         long _id = db.insert(Contract.ProjectEntry.TABLE_NAME, null, value);
                         if (_id != -1) {
                             rowsInsertedProj++;
@@ -102,8 +100,6 @@ public class ToDoProvider extends ContentProvider {
                 int rowsInsertedTask = 0;
                 try {
                     for (ContentValues value : values) {
-                        long taskId = value.getAsLong(Contract.TaskEntry.COLUMN_TASK_ID);
-
                         long _id = db.insert(Contract.TaskEntry.TABLE_NAME, null, value);
                         if (_id != -1) {
                             rowsInsertedTask++;
@@ -165,7 +161,7 @@ public class ToDoProvider extends ContentProvider {
                 cursor = mOpenHelper.getReadableDatabase().query(
                         Contract.ProjectEntry.TABLE_NAME,
                         projection,
-                        Contract.ProjectEntry.COLUMN_PROJECT_ID + " = ? ",
+                        Contract.ProjectEntry._ID + " = ? ",
                         selectionArgs,
                         null,
                         null,

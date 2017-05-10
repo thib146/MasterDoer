@@ -10,6 +10,8 @@ import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
 
+import java.util.ArrayList;
+
 /**
  * Helper to manage scheduling the reminder alarm
  */
@@ -20,14 +22,14 @@ public class AlarmScheduler {
      *
      * @param context Local application or activity context
      * @param alarmTime Alarm start time
-     * @param reminderTask Uri referencing the task in the content provider
+     * @param taskData task ID + task project ID
      */
-    public static void scheduleAlarm(Context context, long alarmTime, Uri reminderTask) {
+    public static void scheduleAlarm(Context context, long alarmTime, ArrayList<String> taskData) {
         //Schedule the alarm. Will update an existing item for the same task.
         AlarmManager manager = AlarmManagerProvider.getAlarmManager(context);
 
         PendingIntent operation =
-                ReminderAlarmService.getReminderPendingIntent(context, reminderTask);
+                ReminderAlarmService.getReminderPendingIntent(context, taskData);
 
         if (android.os.Build.VERSION.SDK_INT >= 19) {
             manager.setExact(AlarmManager.RTC, alarmTime, operation);

@@ -6,15 +6,34 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.database.ContentObserver;
 import android.database.Cursor;
+import android.database.MatrixCursor;
+import android.database.MergeCursor;
 import android.net.Uri;
+import android.os.Handler;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 import com.thibautmassard.android.masterdoer.R;
+import com.thibautmassard.android.masterdoer.data.Project;
+import com.thibautmassard.android.masterdoer.data.Task;
 import com.thibautmassard.android.masterdoer.ui.TaskActivity;
 import com.thibautmassard.android.masterdoer.ui.TaskListFragment;
 import com.thibautmassard.android.masterdoer.data.Contract;
+
+import java.util.ArrayList;
+import java.util.Observable;
+import java.util.Observer;
 
 import static com.thibautmassard.android.masterdoer.ui.ProjectListFragment.MAIN_PROJECTS_PROJECTION;
 import static com.thibautmassard.android.masterdoer.ui.TaskListFragment.MAIN_TASKS_PROJECTION;
@@ -28,10 +47,39 @@ public class ReminderAlarmService extends IntentService {
 
     private static final int NOTIFICATION_ID = 42;
 
+    private static String EXT_TASK_ID = "task_id";
+    private static String EXT_TASK_PROJECT_ID = "task_project_id";
+
+    private boolean firstCall;
+    private int oldProjectPosition;
+    private int mTodayTaskNumber;
+    private int mWeekTaskNumber;
+    private long mMaxProjectId;
+
+    private MergeCursor mergeAlarmProjectCursor;
+    private MergeCursor mergeTaskCursorLocal;
+    private MergeCursor mergeTaskCursorGlobal;
+
+    private String mTaskId;
+    private String mTaskName;
+    private String mTaskProjectId;
+    private String mProjectPosition;
+
+    private ArrayList<String> mProjectList;
+    private ArrayList<String> mProjectIdList;
+    private ArrayList<String> mProjectTaskNumberList;
+    private ArrayList<String> mProjectTaskDoneList;
+
+    private DatabaseReference mFirebaseDatabaseRef;
+
+    private boolean firstProjectCall;
+    private boolean firstAlarmCall;
+
     //This is a deep link intent, and needs the task stack
-    public static PendingIntent getReminderPendingIntent(Context context, Uri uri) {
+    public static PendingIntent getReminderPendingIntent(Context context, ArrayList<String> data) {
         Intent action = new Intent(context, ReminderAlarmService.class);
-        action.setData(uri);
+        action.putExtra(EXT_TASK_ID, data.get(0));
+        action.putExtra(EXT_TASK_PROJECT_ID, data.get(1));
         return PendingIntent.getService(context, 0, action, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
@@ -41,94 +89,251 @@ public class ReminderAlarmService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        Uri uri = intent.getData();
+        mTaskId = intent.getStringExtra(EXT_TASK_ID);
+        mTaskProjectId = intent.getStringExtra(EXT_TASK_PROJECT_ID);
 
-        //Display a notification to view the task details
-        //TODO : add fragment possibility for the Two-Pane Mode
-        Intent action = new Intent(this, TaskActivity.class); // Intent directing to the Detail Activity
+        if (mergeAlarmProjectCursor != null) {
+            mergeAlarmProjectCursor.close();
+        }
+        if (mergeTaskCursorLocal != null) {
+            mergeTaskCursorLocal.close();
+        }
+        if (mergeTaskCursorGlobal != null) {
+            mergeTaskCursorGlobal.close();
+        }
 
-        // Get the task's project name and ID in order to
-        // launch the project's task list when clicking on the notification
-        String[] projectData = getProjectData(uri);
+        mFirebaseDatabaseRef = FirebaseDatabase.getInstance().getReference();
 
-        action.putExtra(TaskListFragment.ARG_ITEM_ID, projectData[0]);
-        action.putExtra(TaskListFragment.ARG_ITEM_NAME, projectData[1]);
-        action.putExtra(TaskListFragment.ARG_ITEM_POSITION, "1");
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
-        // Create the Pending Intent
-        PendingIntent operation = TaskStackBuilder.create(this)
-                .addNextIntentWithParentStack(action)
-                .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        // Grab the task description
-        String description = getTaskDescription(uri);
-
-        // Create the notification
-        Notification note = new NotificationCompat.Builder(this)
-                .setContentTitle(getString(R.string.reminder_title))
-                .setContentText(description)
-                .setSmallIcon(R.mipmap.icon)
-                .setContentIntent(operation)
-                .setAutoCancel(true)
-                .build();
-
-        // Set the notification
-        manager.notify(NOTIFICATION_ID, note);
+        firstProjectCall = true;
+        getProjectsFromFirebase(user);
     }
 
-    private String[] getProjectData(Uri uri) {
+    public void getProjectsFromFirebase(final FirebaseUser user) {
+        if (user != null) {
+            final String[] columns = new String[] {"_id", "project_name", "project_date", "project_color",
+                    "project_task_number", "project_task_done"};
+            final MatrixCursor matrixAlarmProjectCursor = new MatrixCursor(columns);
+            mProjectTaskNumberList = new ArrayList<>();
+            mProjectTaskDoneList = new ArrayList<>();
+            firstCall = true;
+            firstAlarmCall = true;
+            oldProjectPosition = 0;
+            mTodayTaskNumber = 0;
+            mWeekTaskNumber = 0;
 
-        String projectId = "", projectName = "";
+            final DatabaseReference projectRef = mFirebaseDatabaseRef.child("users").child(user.getUid()).child("projects");
+            projectRef.addChildEventListener(new ChildEventListener() {
+                @Override
+                public void onChildAdded(DataSnapshot dataSnapshot, String prevChildKey) {
+                    Project project = dataSnapshot.getValue(Project.class);
 
-        // Get the task we want a reminder of
-        Cursor taskCursor = getContentResolver().query(
-                uri,
-                MAIN_TASKS_PROJECTION,
-                null,
-                null,
-                null);
+                    matrixAlarmProjectCursor.addRow(new Object[]{project.id, project.name, project.date, project.color, project.taskNumber, project.taskDone});
 
-        // Get the task's project ID
-        if (taskCursor != null && taskCursor.moveToFirst()) {
-            projectId = taskCursor.getString(Contract.TaskEntry.POSITION_TASK_PROJECT_ID);
-            taskCursor.close();
+                    //if (firstProjectCall) {
+                        handleLoadedProjects(user, matrixAlarmProjectCursor);
+                        //firstProjectCall = false;
+                    //}
+                }
+                @Override
+                public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
+                @Override
+                public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
+                @Override
+                public void onChildRemoved(DataSnapshot dataSnapshot) {}
+                @Override
+                public void onCancelled(DatabaseError databaseError) {}
+            });
+
+            final DatabaseReference maxProjectIdRef = mFirebaseDatabaseRef.child("users").child(user.getUid()).child("maxProjectId");
+            maxProjectIdRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    mMaxProjectId = (long) dataSnapshot.getValue();
+                }
+                @Override
+                public void onCancelled(DatabaseError databaseError) {}
+            });
         }
-
-        // Get the task's project Name
-        String[] mSelectionArgs = {""};
-        mSelectionArgs[0] = projectId;
-        Cursor projectCursor = getContentResolver().query(
-                Contract.ProjectEntry.CONTENT_URI,
-                MAIN_PROJECTS_PROJECTION,
-                Contract.ProjectEntry._ID + "=?",
-                mSelectionArgs,
-                null);
-
-        if (projectCursor != null && projectCursor.moveToFirst()) {
-            projectName = projectCursor.getString(Contract.ProjectEntry.POSITION_PROJECT_NAME);
-            projectCursor.close();
-        }
-
-        // Return the data acquired
-        String[] projectData = {projectId, projectName};
-        return projectData;
     }
 
-    private String getTaskDescription(Uri uri) {
-        Cursor cursor = getContentResolver().query(uri, null, null, null, null);
-        String description = "";
-        try {
-            if (cursor != null && cursor.moveToFirst()) {
-                int colIndex = cursor.getColumnIndex(Contract.TaskEntry.COLUMN_TASK_NAME);
-                description = cursor.getString(colIndex);
-            }
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
+    public void handleLoadedProjects(FirebaseUser user, MatrixCursor matrixAlarmProjectCursor) {
+        mergeAlarmProjectCursor = new MergeCursor(new Cursor[] { matrixAlarmProjectCursor });
+
+        mProjectList = new ArrayList<>();
+        mProjectIdList = new ArrayList<>();
+
+        for (int pos = 0; pos < mergeAlarmProjectCursor.getCount(); pos++) {
+            mergeAlarmProjectCursor.moveToPosition(pos);
+            mProjectList.add(mergeAlarmProjectCursor.getString(Contract.ProjectEntry.POSITION_PROJECT_NAME));
+            mProjectIdList.add(mergeAlarmProjectCursor.getString(Contract.ProjectEntry.POSITION_ID));
         }
 
-        return description;
+        mergeAlarmProjectCursor.moveToLast();
+        String projectId = mergeAlarmProjectCursor.getString(Contract.ProjectEntry.POSITION_ID);
+        int projectPosition = mergeAlarmProjectCursor.getPosition();
+
+        getTasksFromFirebase(user, projectId, projectPosition, mergeAlarmProjectCursor);
+        matrixAlarmProjectCursor.close();
+    }
+
+    public void getTasksFromFirebase(final FirebaseUser user, final String projectId,
+                                     final int projectPosition, final MergeCursor mergeAlarmProjectCursor) {
+        if (user != null) {
+            final String[] columns = new String[] {"_id", "task_project_id", "task_name", "task_date",
+                    "task_status", "task_priority", "task_reminder_date"};
+            //final MatrixCursor matrixAlarmTaskCursor = new MatrixCursor(columns);
+
+            final DatabaseReference taskNumberRef = mFirebaseDatabaseRef.child("users").child(user.getUid()).child("tasks");
+            taskNumberRef.orderByChild("projectId").equalTo(projectId).addChildEventListener(new ChildEventListener() {
+                @Override
+                public void onChildAdded(DataSnapshot dataSnapshot, String prevChildKey) {
+                    Task task = dataSnapshot.getValue(Task.class);
+
+                    final MatrixCursor matrixAlarmTaskCursor = new MatrixCursor(columns);
+                    matrixAlarmTaskCursor.addRow(new Object[]{task.id, task.projectId, task.name,
+                            task.date, task.status, task.priority, task.reminderDate});
+
+                    handleTasksNumbers(projectPosition, matrixAlarmTaskCursor);
+                }
+                @Override
+                public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
+                @Override
+                public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
+                @Override
+                public void onChildRemoved(DataSnapshot dataSnapshot) {}
+                @Override
+                public void onCancelled(DatabaseError databaseError) {}
+            });
+        }
+    }
+
+    public void handleTasksNumbers(int projectPosition, MatrixCursor matrixAlarmTaskCursor) {
+        if (!firstCall) {
+            mergeTaskCursorGlobal = new MergeCursor(new Cursor[]{mergeTaskCursorGlobal, matrixAlarmTaskCursor});
+        } else {
+            mergeTaskCursorGlobal = new MergeCursor(new Cursor[]{matrixAlarmTaskCursor});
+        }
+        mergeTaskCursorLocal = new MergeCursor(new Cursor[]{matrixAlarmTaskCursor});
+
+        if (firstCall && projectPosition == 0) {
+            oldProjectPosition = projectPosition;
+        }
+
+        if (projectPosition > oldProjectPosition) {
+            if (firstCall) { // case where there are no tasks on the first projects
+                for (int i = 0; i < projectPosition - oldProjectPosition; i++) {
+                    mProjectTaskNumberList.add(oldProjectPosition + i, "0");
+                    mProjectTaskDoneList.add(oldProjectPosition + i, "0");
+                }
+            } else {
+                for (int i = 1; i < projectPosition - oldProjectPosition; i++) {
+                    mProjectTaskNumberList.add(oldProjectPosition + i, "0");
+                    mProjectTaskDoneList.add(oldProjectPosition + i, "0");
+                }
+            }
+            oldProjectPosition = projectPosition;
+        }
+
+        if (projectPosition >= mProjectTaskNumberList.size()) {
+            mProjectTaskNumberList.add(projectPosition, String.valueOf(mergeTaskCursorLocal.getCount()));
+        } else {
+            mProjectTaskNumberList.set(projectPosition, String.valueOf(mergeTaskCursorLocal.getCount()));
+        }
+
+        int taskDoneCount = 0;
+        for (int j=0; j < mergeTaskCursorLocal.getCount(); j++) {
+            mergeTaskCursorLocal.moveToPosition(j);
+            if (mergeTaskCursorLocal.getString(Contract.TaskEntry.POSITION_TASK_STATUS).equals("1")) {
+                taskDoneCount++;
+            }
+        }
+        mergeTaskCursorLocal.moveToFirst();
+
+        if (projectPosition >= mProjectTaskDoneList.size()) {
+            mProjectTaskDoneList.add(projectPosition, String.valueOf(taskDoneCount));
+        } else {
+            mProjectTaskDoneList.set(projectPosition, String.valueOf(taskDoneCount));
+        }
+
+        handleDelayedData(3000);
+
+        firstCall = false;
+        matrixAlarmTaskCursor.close();
+        mergeTaskCursorGlobal.close();
+    }
+
+    public void handleDelayedData(int timeLapse) {
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                if (firstAlarmCall) {
+                    NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                    //Display a notification to view the task details
+                    //TODO : add fragment possibility for the Two-Pane Mode
+                    Intent action = new Intent(ReminderAlarmService.this, TaskActivity.class); // Intent directing to the Detail Activity
+
+                    // Get the task's project name and ID in order to
+                    // launch the project's task list when clicking on the notification
+                    //String[] projectData = getProjectData(uri);
+
+                    // Get the task's name
+                    for (int i = 0; i < mergeTaskCursorGlobal.getCount(); i++) {
+                        mergeTaskCursorGlobal.moveToPosition(i);
+                        String currentTaskId = mergeTaskCursorGlobal.getString(Contract.TaskEntry.POSITION_ID);
+                        if (mTaskId.equals(currentTaskId)) {
+                            mTaskName = mergeTaskCursorGlobal.getString(Contract.TaskEntry.POSITION_TASK_NAME);
+                            mTaskProjectId = mergeTaskCursorGlobal.getString(Contract.TaskEntry.POSITION_TASK_PROJECT_ID);
+                        }
+                    }
+
+                    // Get the project's position
+                    for (int i = 0; i < mergeAlarmProjectCursor.getCount(); i++) {
+                        mergeAlarmProjectCursor.moveToPosition(i);
+                        String currentProjectId = mergeAlarmProjectCursor.getString(Contract.ProjectEntry.POSITION_ID);
+                        if (mTaskProjectId.equals(currentProjectId)) {
+                            mProjectPosition = String.valueOf(i);
+                        }
+                    }
+
+                    String projectId = mProjectIdList.get(Integer.valueOf(mProjectPosition));
+                    String projectName = mProjectList.get(Integer.valueOf(mProjectPosition));
+
+                    action.putExtra(TaskListFragment.ARG_ITEM_ID, projectId);
+                    action.putExtra(TaskListFragment.ARG_ITEM_NAME, projectName);
+                    action.putExtra(TaskListFragment.ARG_ITEM_POSITION, mProjectPosition);
+                    action.putStringArrayListExtra(TaskListFragment.ARG_PROJECT_LIST, mProjectList);
+                    action.putStringArrayListExtra(TaskListFragment.ARG_PROJECT_ID_LIST, mProjectIdList);
+                    action.putStringArrayListExtra(TaskListFragment.ARG_PROJECT_TASK_NUMBER_LIST, mProjectTaskNumberList);
+                    action.putStringArrayListExtra(TaskListFragment.ARG_PROJECT_TASK_DONE_LIST, mProjectTaskDoneList);
+
+                    // Create the Pending Intent
+                    PendingIntent operation = TaskStackBuilder.create(ReminderAlarmService.this)
+                            .addNextIntentWithParentStack(action)
+                            .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+                    // Grab the task description
+                    //String description = getTaskDescription(uri);
+
+                    // Create the notification
+                    Notification note = new NotificationCompat.Builder(ReminderAlarmService.this)
+                            .setContentTitle(getString(R.string.reminder_title))
+                            .setContentText(mTaskName)
+                            .setSmallIcon(R.mipmap.icon)
+                            .setContentIntent(operation)
+                            .setAutoCancel(true)
+                            .build();
+
+                    // Set the notification
+                    manager.notify(NOTIFICATION_ID, note);
+
+                    mergeAlarmProjectCursor.close();
+                    mergeTaskCursorLocal.close();
+                    mergeTaskCursorGlobal.close();
+                    firstAlarmCall = false;
+                }
+            }
+        }, timeLapse);
     }
 }

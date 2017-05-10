@@ -15,7 +15,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "masterdoer.db";
 
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 12;
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -27,17 +27,17 @@ public class DBHelper extends SQLiteOpenHelper {
         final String SQL_CREATE_PROJECTS_TABLE =
                 "CREATE TABLE " + ProjectEntry.TABLE_NAME + " (" +
                         ProjectEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                        ProjectEntry.COLUMN_PROJECT_ID + " INTEGER," +
                         ProjectEntry.COLUMN_PROJECT_NAME + " STRING NOT NULL," +
                         ProjectEntry.COLUMN_PROJECT_DATE + " DATETIME NOT NULL," +
-                        ProjectEntry.COLUMN_PROJECT_COLOR + " STRING);";
+                        ProjectEntry.COLUMN_PROJECT_COLOR + " STRING," +
+                        ProjectEntry.COLUMN_PROJECT_TASK_NUMBER + " STRING," +
+                        ProjectEntry.COLUMN_PROJECT_TASK_DONE + " STRING);";
 
         sqLiteDatabase.execSQL(SQL_CREATE_PROJECTS_TABLE);
 
         final String SQL_CREATE_TASKS_TABLE =
                 "CREATE TABLE " + TaskEntry.TABLE_NAME + " (" +
                         TaskEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                        TaskEntry.COLUMN_TASK_ID + " INTEGER, " +
                         TaskEntry.COLUMN_TASK_PROJECT_ID + " INTEGER NOT NULL," +
                         TaskEntry.COLUMN_TASK_NAME + " STRING NOT NULL," +
                         TaskEntry.COLUMN_TASK_DATE + " DATETIME," +
