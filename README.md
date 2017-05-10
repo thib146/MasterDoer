@@ -14,5 +14,5 @@ Start by creating a new project and choosing a color. Then create tasks inside y
 * Get a quick view of Today or This Week's tasks
 * Material design
 * Two-pane mode available for tablets in Landscape Mode
-* Create an online account or link your Google account to save your data - **In progress using Firebase**
+* Create an online account or link your Google account to save your data - **Developed and published in the online_database branch**
 * Archive your projects when they're completed - **In progress**
